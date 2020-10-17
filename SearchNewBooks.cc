@@ -10,35 +10,53 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 
 
 // Class for storing book information
 class Book
 {
 	private:
-		std::string ISBN;
-		std::string name;
-		std::string bookType;
+	    std::string ISBN;
+	    std::string language;
+	    std::string bookType;
 
 	public:
-		Book(std::string);	// Constructor takes a comma delimited string with the ISBN, name, and type
-		void testOutput();
+	    Book(std::string);	// Constructor takes a comma delimited string with the ISBN, name, and type
+	    void testOutput();
+            bool operator<(const Book&);
 };
 
 Book::Book(std::string bookData)
 {
-        // Create a stream from the given data
-	std::stringstream sStream(bookData);
+    // Create a stream from the given data
+    std::stringstream sStream(bookData);
 
-        // Read each section of the line for the book's information
-	getline(sStream, ISBN, ',');
-	getline(sStream, name, ',');
-	getline(sStream, bookType, ',');
+    // Read each section of the line for the book's information
+    getline(sStream, ISBN, ',');
+    getline(sStream, language, ',');
+    getline(sStream, bookType, ',');
 }
 
 void Book::testOutput()
 {
-	std::cout << "Book - " << ISBN << ", " << name << ", " << bookType << "\n\n";
+    std::cout << "Book - " << ISBN << ", " << language << ", " << bookType << "\n\n";
+}
+
+bool Book::operator<(const Book& other)
+{
+    // Sort on ISBN number first if they are different
+    if (ISBN != other.ISBN)
+        return (ISBN < other.ISBN);
+
+    // Sort on language second if they are different
+    if (language == other.language)
+        return (language > other.language);
+
+    // Sort by book type third
+    return (bookType == "new" ||                                        // If the first book is "new" then it is sorted first
+            (bookType == "used" && other.bookType != "new") ||          // If the first book is "used" then it is sorted first unless the second book is "new"
+            (bookType == "digital" && other.bookType == "digital"));    // If the first book is "digital" then it is only sorted first if the second book is also "digital"
 }
 
 
@@ -91,6 +109,13 @@ int main(int argc, char *argv[])
     ReadBookFileIntoVector("request.dat", reqVector);
 
     reqVector[1].testOutput();
+
+    std::cout << " --- SORTED --- \n\n";
+
+    std::sort(bookVector.begin(), bookVector.end());
+
+    for (std::vector<Book>::iterator it=bookVector.begin(); it!=bookVector.end(); ++it)
+        it->testOutput();
 
     return 0;
 }
