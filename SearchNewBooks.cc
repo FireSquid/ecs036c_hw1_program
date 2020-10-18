@@ -24,7 +24,8 @@ class Book
 	public:
 	    Book(std::string);	// Constructor takes a comma delimited string with the ISBN, name, and type
 	    void testOutput();
-            bool operator<(const Book&);
+            bool operator<(const Book&) const;
+            bool operator==(const Book&) const;
 };
 
 Book::Book(std::string bookData)
@@ -40,10 +41,10 @@ Book::Book(std::string bookData)
 
 void Book::testOutput()
 {
-    std::cout << "Book - " << ISBN << ", " << language << ", " << bookType << "\n\n";
+    std::cout << "Book - " << ISBN << ", " << language << ", " << bookType;
 }
 
-bool Book::operator<(const Book& other)
+bool Book::operator<(const Book& other) const
 {
     // Sort on ISBN number first if they are different
     if (ISBN != other.ISBN)
@@ -57,6 +58,11 @@ bool Book::operator<(const Book& other)
     return (bookType == "new" ||                                        // If the first book is "new" then it is sorted first
             (bookType == "used" && other.bookType != "new") ||          // If the first book is "used" then it is sorted first unless the second book is "new"
             (bookType == "digital" && other.bookType == "digital"));    // If the first book is "digital" then it is only sorted first if the second book is also "digital"
+}
+
+bool Book::operator==(const Book& other) const
+{
+    return ((ISBN == other.ISBN) && (language == other.language) && (bookType == other.bookType));
 }
 
 
@@ -78,8 +84,6 @@ void ReadBookFileIntoVector(std::string filename, std::vector<Book> &bookVector)
             // Construct a new book from the data read from the file
             Book book (newBook);
 
-            book.testOutput();
-
             // Add book to the vector
             bookVector.push_back(book);
 	}
@@ -92,6 +96,35 @@ void ReadBookFileIntoVector(std::string filename, std::vector<Book> &bookVector)
 
 }
 
+// Linear search for a book through a vector
+int LinearSearch(const Book &book, const std::vector<Book> &bookVect)
+{
+    // Loop through each index of the vector
+    for (int i=0; i<(int)bookVect.size(); i++)
+    {
+        // If the book is found at position i, return i
+        if (bookVect[i] == book)
+            return i;
+    }
+
+    // Retrun -1 if the book is not found
+    return -1;
+}
+
+// Function for debugging vector data
+void DisplayBookVector(std::string header, std::vector<Book> &bookVect)
+{
+    std::cout << header << "\n\t";
+
+    for (std::vector<Book>::iterator it=bookVect.begin(); it!=bookVect.end(); ++it)
+    {
+        it->testOutput();
+        std::cout << "\n\t";
+    }
+
+    std::cout << "\n";
+}
+
 
 // Main Function
 int main(int argc, char *argv[])
@@ -101,21 +134,28 @@ int main(int argc, char *argv[])
     // Read the books from newbooks into the vector
     ReadBookFileIntoVector("newbooks.dat", bookVector);
 
-    bookVector[2].testOutput();
+    DisplayBookVector(" -- newbooks.dat -- ", bookVector);
+
+    // Sort the vector of new books
+    std::sort(bookVector.begin(), bookVector.end());
+    DisplayBookVector(" ===SORTED=== ", bookVector);
 
     // Vector with the books being requested
     std::vector<Book> reqVector;
     // Read the books from request into the vector
     ReadBookFileIntoVector("request.dat", reqVector);
 
-    reqVector[1].testOutput();
+    DisplayBookVector(" -- request.dat", reqVector);
 
-    std::cout << " --- SORTED --- \n\n";
 
-    std::sort(bookVector.begin(), bookVector.end());
+    for (std::vector<Book>::iterator reqIt=reqVector.begin(); reqIt!=reqVector.end(); reqIt++)
+    {
+        int foundIndex = LinearSearch(*reqIt, bookVector);
 
-    for (std::vector<Book>::iterator it=bookVector.begin(); it!=bookVector.end(); ++it)
-        it->testOutput();
+        reqIt->testOutput();
+        std::cout << "Requested book is at index " << foundIndex << "\n\n";
+    }
+
 
     return 0;
 }
